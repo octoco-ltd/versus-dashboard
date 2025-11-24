@@ -25,6 +25,8 @@ function App() {
     { name: 'Names Collected', value: dashboardData.totals.namesCollected, color: '#10b981' },
     { name: 'Emails Collected', value: dashboardData.totals.emailsCollected, color: '#f59e0b' },
     { name: 'Unique Participants', value: dashboardData.totals.uniqueParticipants, color: '#8b5cf6' },
+    { name: 'Total Packs', value: dashboardData.totals.totalPacks, color: '#ec4899' },
+    { name: 'Total Entries', value: dashboardData.totals.totalEntries, color: '#06b6d4' },
   ] : []
 
   return (
