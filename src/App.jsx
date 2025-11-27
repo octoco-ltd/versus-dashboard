@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 function App() {
   const [dashboardData, setDashboardData] = useState(null)
+  const [entriesPerDay, setEntriesPerDay] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/dashboard')
-      .then(response => response.json())
-      .then(data => {
-        setDashboardData(data)
+    Promise.all([
+      fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/dashboard'),
+      fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/entries-per-day')
+    ])
+      .then(([dashboardRes, entriesRes]) => Promise.all([dashboardRes.json(), entriesRes.json()]))
+      .then(([dashboardData, entriesData]) => {
+        setDashboardData(dashboardData)
+        setEntriesPerDay(entriesData)
         setLoading(false)
       })
       .catch(err => {
@@ -194,6 +199,41 @@ function App() {
                     ))}
                   </Bar>
                 </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Entries Per Day Line Chart */}
+            <div className="bg-white rounded-lg shadow-md p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Total Entries Per Day</h2>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={entriesPerDay} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="totalEntries" 
+                    name="Total Entries" 
+                    stroke="#06b6d4" 
+                    strokeWidth={3}
+                    dot={{ fill: '#06b6d4', r: 5 }}
+                    activeDot={{ r: 7 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
 
