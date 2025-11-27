@@ -15,7 +15,21 @@ function App() {
       .then(([dashboardRes, entriesRes]) => Promise.all([dashboardRes.json(), entriesRes.json()]))
       .then(([dashboardData, entriesData]) => {
         setDashboardData(dashboardData)
-        setEntriesPerDay(entriesData)
+        // Handle different response formats
+        if (Array.isArray(entriesData)) {
+          setEntriesPerDay(entriesData)
+        } else if (entriesData && entriesData.data && Array.isArray(entriesData.data)) {
+          setEntriesPerDay(entriesData.data)
+        } else if (entriesData && typeof entriesData === 'object') {
+          // Convert object to array if needed
+          const dataArray = Object.entries(entriesData).map(([date, totalEntries]) => ({
+            date,
+            totalEntries
+          }))
+          setEntriesPerDay(dataArray)
+        } else {
+          setEntriesPerDay([])
+        }
         setLoading(false)
       })
       .catch(err => {
@@ -205,36 +219,42 @@ function App() {
             {/* Entries Per Day Line Chart */}
             <div className="bg-white rounded-lg shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Total Entries Per Day</h2>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={entriesPerDay} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="totalEntries" 
-                    name="Total Entries" 
-                    stroke="#06b6d4" 
-                    strokeWidth={3}
-                    dot={{ fill: '#06b6d4', r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {entriesPerDay && entriesPerDay.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={entriesPerDay} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="totalEntries" 
+                      name="Total Entries" 
+                      stroke="#06b6d4" 
+                      strokeWidth={3}
+                      dot={{ fill: '#06b6d4', r: 5 }}
+                      activeDot={{ r: 7 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>No entries per day data available</p>
+                </div>
+              )}
             </div>
 
             {/* Conversion Metrics */}
