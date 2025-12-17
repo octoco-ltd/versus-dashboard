@@ -4,24 +4,27 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 function App() {
   const [dashboardData, setDashboardData] = useState(null)
   const [entriesPerDay, setEntriesPerDay] = useState([])
+  const [participantsPerDay, setParticipantsPerDay] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     Promise.all([
       fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/dashboard'),
-      fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/entries-per-day')
+      fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/entries-per-day'),
+      fetch('https://revx-leads-api.azurewebsites.net/api/TwilioWebhook/participants-per-day')
     ])
-      .then(([dashboardRes, entriesRes]) => Promise.all([dashboardRes.json(), entriesRes.json()]))
-      .then(([dashboardData, entriesData]) => {
+      .then(([dashboardRes, entriesRes, participantsRes]) => 
+        Promise.all([dashboardRes.json(), entriesRes.json(), participantsRes.json()]))
+      .then(([dashboardData, entriesData, participantsData]) => {
         setDashboardData(dashboardData)
-        // Handle different response formats
+        
+        // Handle entries per day
         if (Array.isArray(entriesData)) {
           setEntriesPerDay(entriesData)
         } else if (entriesData && entriesData.data && Array.isArray(entriesData.data)) {
           setEntriesPerDay(entriesData.data)
         } else if (entriesData && typeof entriesData === 'object') {
-          // Convert object to array if needed
           const dataArray = Object.entries(entriesData).map(([date, totalEntries]) => ({
             date,
             totalEntries
@@ -30,6 +33,16 @@ function App() {
         } else {
           setEntriesPerDay([])
         }
+        
+        // Handle participants per day
+        if (Array.isArray(participantsData)) {
+          setParticipantsPerDay(participantsData)
+        } else if (participantsData && participantsData.data && Array.isArray(participantsData.data)) {
+          setParticipantsPerDay(participantsData.data)
+        } else {
+          setParticipantsPerDay([])
+        }
+        
         setLoading(false)
       })
       .catch(err => {
@@ -253,6 +266,47 @@ function App() {
               ) : (
                 <div className="flex items-center justify-center h-64 text-gray-500">
                   <p>No entries per day data available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Participants Per Day Line Chart */}
+            <div className="bg-white rounded-lg shadow-md p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">New Participants Per Day</h2>
+              {participantsPerDay && participantsPerDay.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={participantsPerDay} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="totalParticipants" 
+                      name="New Participants" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#8b5cf6', r: 5 }}
+                      activeDot={{ r: 7 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-64 text-gray-500">
+                  <p>No participants per day data available</p>
                 </div>
               )}
             </div>
